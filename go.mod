@@ -1,4 +1,4 @@
-module github.com/mostafa/xk6-kafka/v2
+module github.com/nayanpahuja-tt/xk6-kafka/v2
 
 go 1.26
 
