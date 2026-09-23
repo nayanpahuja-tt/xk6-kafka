@@ -23,11 +23,13 @@ export enum COMPRESSION_CODECS {
 export enum SASL_MECHANISMS {
   NONE = "none",
   SASL_PLAIN = "sasl_plain",
+  SASL_GSSAPI = "sasl_gssapi",
   SASL_SCRAM_SHA256 = "sasl_scram_sha256",
   SASL_SCRAM_SHA512 = "sasl_scram_sha512",
   SASL_SSL = "sasl_ssl",
   SASL_AWS_IAM = "sasl_aws_iam",
   SASL_AZURE_ENTRA = "sasl_azure_entra",
+  SASL_GCP_OAUTH = "sasl_gcp_oauth",
 }
 
 /* TLS versions for creating a secure communication channel with Kafka. */
@@ -110,6 +112,17 @@ export interface SASLConfig {
   password: string;
   algorithm: SASL_MECHANISMS;
   awsProfile: string;
+  scope?: string;
+  kerberosConfig?: KerberosConfig;
+}
+
+/* SASL GSSAPI configurations for Kerberos authentication to Kafka. */
+export interface KerberosConfig {
+  serviceName?: string;
+  principal?: string;
+  kInitCmd?: string;
+  keyTab?: string;
+  minTimeBeforeRelogin?: number;
 }
 
 /* TLS configurations for creating a secure communication channel with Kafka. */
@@ -280,6 +293,20 @@ export interface TopicMetadata {
   topic: string;
   partitions: PartitionInfo[];
   error: any | null;
+}
+
+/** Topics whose end offsets will initialize an inactive consumer group. */
+export interface ConsumerGroupOffsetsConfig {
+  groupId: string;
+  topics: string[];
+}
+
+/** One topic-partition offset captured for a consumer group. */
+export interface ConsumerGroupOffset {
+  topic: string;
+  partition: number;
+  /** Loses integer precision above 2^53; only a concern for extremely large offsets. */
+  offset: number;
 }
 
 /* Reference uses the import statement of Protobuf
@@ -473,6 +500,13 @@ export class AdminClient {
   deleteTopic(topic: string): void;
   listTopics(): TopicInfo[];
   getMetadata(topic: string): TopicMetadata;
+  /**
+   * Reset an inactive consumer group to a snapshot of the current end offset
+   * of every partition in the supplied topics.
+   */
+  initializeConsumerGroupOffsets(
+    config: ConsumerGroupOffsetsConfig,
+  ): ConsumerGroupOffset[];
   close(): void;
 }
 
